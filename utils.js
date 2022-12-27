@@ -37,5 +37,10 @@ class Utils {
             }
         }
         return cellCenters;
-    }    
+    }
+
+    //returns the interpolated value yp at location xp given x and y at points 1 and 2
+    linearInterp(x1, x2, xp, y1, y2) {
+        return y1 + (y2 - y1) * (xp - x1) / (x2 - x1)
+    }
 }
