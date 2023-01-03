@@ -7,7 +7,7 @@ const utils = new Utils(gridSize, cellSize);
 
 const visc = 0.0001;
 const diff = 0.0000001;
-const dt = 1;
+const dt = 0.01;
 const dissolveRate = 0.01;
 
 fluidCanvas.width=gridSize*cellSize;
@@ -60,14 +60,19 @@ function advect(arr, arr_n) {
             let cellY = cellCenter[i][j][1];
             let advX = cellX - vx[i][j] * dt;
             let advY = cellY - vy[i][j] * dt;
-            let xi = Math.floor(advX / cellSize);
-            let yi = Math.floor(advY / cellSize);
+            //Subtracting cellSize/2 puts the interpolation on the correct cells
+            let xi = Math.floor((advX - cellSize/2) / cellSize);
+            let yi = Math.floor((advY - cellSize / 2) / cellSize);
             let interpX1 = utils.linearInterp(cellCenter[xi][yi][0],
                 cellCenter[xi+1][yi][0], advX, arr[xi][yi], arr[xi+1][yi]);
             let interpX2 = utils.linearInterp(cellCenter[xi][yi+1][0],
                 cellCenter[xi+1][yi+1][0], advX, arr[xi][yi+1], arr[xi+1][yi+1]);
             arr_n[i][j] = utils.linearInterp(cellCenter[xi][yi][1],
                 cellCenter[xi][yi+1][1], advY, interpX1, interpX2);
+            if (arr_n[i][j] < 0) {
+                console.log('Something is wrong')
+            }
+            //Something is buggy with advect. Try adding boundary conditions to see if that'll help
         }
     }
 }
