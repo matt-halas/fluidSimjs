@@ -7,8 +7,8 @@ const utils = new Utils(gridSize, cellSize);
 
 const visc = 0.001;
 const diff = 0.00001;
-const dt = 0.01;
-const dissolveRate = 0.00001;
+const dt = 0.0001;
+const dissolveRate = 0.001;
 const slowRate = 0.001;
 
 fluidCanvas.width=gridSize*cellSize;
@@ -27,12 +27,16 @@ let div = utils.createArray();
 let cellCenter = utils.populateCellCenter();
 
 let angle = Math.random() * 2 * Math.PI;
-let velSet = 10;
+let velSet = 1;
+let setVelocityFlag = false;
 
 animate();
 
 function addDye(xIdx, yIdx, densityAmount = 500) {
     dye[xIdx][yIdx] += densityAmount;
+}
+
+function setVelocity(xIdx, yIdx) {
     vx[xIdx][yIdx] = Math.cos(angle) * velSet;
     vy[xIdx][yIdx] = Math.sin(angle) * velSet;
 }
@@ -59,11 +63,11 @@ function drawDensity() {
 function diffuse(arr, arr_n, diff) {
     a = diff * dt * gridSize**2;
     cRecip = 1 / (1 + 4 * a);
-    for ( let k = 0; k < 20; k++ ) {
+    for ( let k = 0; k < 100; k++ ) {
         for ( let i = 1; i < gridSize - 1; i++ ) {
             for ( let j = 1; j < gridSize - 1; j++) {
                 arr_n[i][j] = (arr[i][j] + a * (arr_n[i+1][j] + arr_n[i-1][j]
-                    + arr_n[i][j+1] + arr_n[i][j-1])) * cRecip
+                    + arr_n[i][j+1] + arr_n[i][j-1])) * cRecip;
             }
         }
     }
@@ -107,7 +111,7 @@ function project(vx, vy) {
     setBoundary(div);
     setBoundary(p);
 
-    for (let k = 0; k < 20; k++) {
+    for (let k = 0; k < 100; k++) {
         for (let i = 1; i < idxLast; i++) {
             for (let j = 1; j < idxLast; j++) {
                 p[i][j] = (div[i][j] + p[i+1][j] + p[i-1][j] 
@@ -127,7 +131,6 @@ function project(vx, vy) {
 }
 
 function setBoundary(arr, isVx = false, isVy = false) {
-    //left and right boundaries
     let idxLast = gridSize - 1;
     let vxSign = 1;
     let vySign = 1;
@@ -149,10 +152,6 @@ function setBoundary(arr, isVx = false, isVy = false) {
     arr[idxLast][0] = (arr[idxLast - 1][0] + arr[idxLast][1]) / 2;
     arr[0][idxLast] = (arr[0][idxLast - 1] + arr[1][idxLast]) / 2;
     arr[idxLast][idxLast] = (arr[idxLast - 1][idxLast] + arr[idxLast][idxLast - 1]) / 2;
-}
-
-function addVelocity(arr, xIdx, yIdx, amount) {
-    arr[xIdx][yIdx] += amount;
 }
 
 function stepVel() {
@@ -189,6 +188,13 @@ function stepDye() {
 
 function animate() {
     addDye(32, 32, 100);
+    addDye(5, 5, 100);
+    addDye(58, 58, 100);
+    addDye(5, 58, 100);
+    addDye(58, 5, 100);
+    if (setVelocityFlag == true) {
+        setVelocity(32, 32)
+    }
     stepVel();
     stepDye();
     drawDensity();
