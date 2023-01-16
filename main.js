@@ -5,9 +5,9 @@ const cellSize=8;
 
 const utils = new Utils(gridSize, cellSize);
 
-const visc = 0.001;
+const visc = 0.1;
 const diff = 0.00001;
-const dt = 0.0001;
+const dt = 0.01;
 const dissolveRate = 0.001;
 const slowRate = 0.001;
 
@@ -71,7 +71,11 @@ function diffuse(arr, arr_n, diff) {
             }
         }
     }
-    arr = arr_n;
+    for ( let i = 1; i < gridSize - 1; i++ ) {
+        for ( let j = 1; j < gridSize - 1; j++) {
+            arr[i][j] = arr_n[i][j];
+        }
+    }
 }
 
 function advect(arr, arr_n) {
@@ -93,6 +97,11 @@ function advect(arr, arr_n) {
                 cellCenter[xi+1][yi+1][0], advX, arr[xi][yi+1], arr[xi+1][yi+1]);
             arr_n[i][j] = utils.linearInterp(cellCenter[xi][yi][1],
                 cellCenter[xi][yi+1][1], advY, interpX1, interpX2);
+        }
+    }
+    for ( let i = 1; i < gridSize - 1; i++ ) {
+        for ( let j = 1; j < gridSize - 1; j++) {
+            arr[i][j] = arr_n[i][j];
         }
     }
 }
@@ -157,16 +166,12 @@ function setBoundary(arr, isVx = false, isVy = false) {
 function stepVel() {
     diffuse(vx, vx_n, visc);
     diffuse(vy, vy_n, visc);
-    vx = vx_n;
-    vy = vy_n;
     project(vx, vy);
     setBoundary(vx, true, false);
     setBoundary(vy, false, true);
     
     advect(vx, vx_n);
     advect(vy, vy_n);
-    vx = vx_n;
-    vy = vy_n;
     project(vx, vy);
     setBoundary(vx, true, false);
     setBoundary(vy, false, true);
@@ -177,10 +182,8 @@ function stepVel() {
 
 function stepDye() {
     diffuse(dye, dye_n, diff);
-    dye = dye_n;
     setBoundary(dye);
     advect(dye, dye_n);
-    dye = dye_n;
     setBoundary(dye);
 
     dissolve(dye, dissolveRate);
