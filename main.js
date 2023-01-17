@@ -5,9 +5,9 @@ const cellSize=8;
 
 const utils = new Utils(gridSize, cellSize);
 
-const visc = 0.1;
+const visc = 0.000001;
 const diff = 0.00001;
-const dt = 0.01;
+const dt = 0.1;
 const dissolveRate = 0.001;
 const slowRate = 0.001;
 
@@ -27,7 +27,7 @@ let div = utils.createArray();
 let cellCenter = utils.populateCellCenter();
 
 let angle = Math.random() * 2 * Math.PI;
-let velSet = 1;
+let velSet = 500;
 let setVelocityFlag = false;
 
 animate();
@@ -60,16 +60,17 @@ function drawDensity() {
     }
 }
 
-function diffuse(arr, arr_n, diff) {
+function diffuse(arr, arr_n, diff, isVx, isVy) {
     a = diff * dt * gridSize**2;
     cRecip = 1 / (1 + 4 * a);
-    for ( let k = 0; k < 100; k++ ) {
+    for ( let k = 0; k < 20; k++ ) {
         for ( let i = 1; i < gridSize - 1; i++ ) {
             for ( let j = 1; j < gridSize - 1; j++) {
                 arr_n[i][j] = (arr[i][j] + a * (arr_n[i+1][j] + arr_n[i-1][j]
                     + arr_n[i][j+1] + arr_n[i][j-1])) * cRecip;
             }
         }
+        setBoundary(arr_n, isVx, isVy);
     }
     for ( let i = 1; i < gridSize - 1; i++ ) {
         for ( let j = 1; j < gridSize - 1; j++) {
@@ -108,11 +109,12 @@ function advect(arr, arr_n) {
 
 function project(vx, vy) {
     let idxLast = gridSize - 1;
+    let h = cellSize / gridSize;
 
     for (let i = 1; i < idxLast; i++) {
         for (let j = 1; j < idxLast; j++) {
-            div[i][j] = ((vx[i+1][j] - vx[i-1][j]) / (2 * cellSize)
-                + (vy[i][j+1] - vy[i][j-1]) / (2 * cellSize));
+            div[i][j] = -0.5 * h * ((vx[i+1][j] - vx[i-1][j])
+                + (vy[i][j+1] - vy[i][j-1]));
             p[i][j] = 0;
         }
     }
@@ -120,17 +122,16 @@ function project(vx, vy) {
     setBoundary(div);
     setBoundary(p);
 
-    for (let k = 0; k < 100; k++) {
+    for (let k = 0; k < 20; k++) {
         for (let i = 1; i < idxLast; i++) {
             for (let j = 1; j < idxLast; j++) {
                 p[i][j] = (div[i][j] + p[i+1][j] + p[i-1][j] 
                     + p[i][j+1] + p[i][j-1]) / 4;
             }
         }
+        setBoundary(p);
     }
 
-    setBoundary(p);
-    
     for (let i = 1; i < idxLast; i++) {
         for (let j = 1; j < idxLast; j++) {
             vx[i][j] -= (p[i+1][j] - p[i-1][j]) / 2;
@@ -144,10 +145,10 @@ function setBoundary(arr, isVx = false, isVy = false) {
     let vxSign = 1;
     let vySign = 1;
     if (isVx) {
-        vxSign = -1;
+        vxSign = 0;
     }
     if (isVy) {
-        vySign = -1;
+        vySign = 0;
     }
     for (let i = 1; i < idxLast; i++) {
         // Top and bottom boundaries
@@ -164,8 +165,8 @@ function setBoundary(arr, isVx = false, isVy = false) {
 }
 
 function stepVel() {
-    diffuse(vx, vx_n, visc);
-    diffuse(vy, vy_n, visc);
+    diffuse(vx, vx_n, visc, true, false);
+    diffuse(vy, vy_n, visc, false, true);
     project(vx, vy);
     setBoundary(vx, true, false);
     setBoundary(vy, false, true);
@@ -195,14 +196,14 @@ function animate() {
     addDye(58, 58, 100);
     addDye(5, 58, 100);
     addDye(58, 5, 100);
-    if (setVelocityFlag == true) {
-        setVelocity(32, 32)
-    }
+    setVelocity(32, 32)
     stepVel();
     stepDye();
     drawDensity();
     requestAnimationFrame(animate);
 }
+
+// TODO: Add user interaction, add boundary setting to diffusion
 
 //Going to ditch the mouse controls for now, instead, one of the cells in the center will be a source of dye and velocity, switching to a random direction every ~2 seconds
 //Event handler property. When the mouse is moved, it passes the event to the function expression below
