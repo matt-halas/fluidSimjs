@@ -1,15 +1,15 @@
 const fluidCanvas=document.getElementById("fluidCanvas")
 
 const gridSize=64;
-const cellSize=8;
+const cellSize=512 / gridSize;
 
 const utils = new Utils(gridSize, cellSize);
 
-const visc = 0.000001;
-const diff = 0.00001;
-const dt = 0.1;
+const visc = 0.000000001;
+const diff = 0.0000000001;
+const dt = 0.01;
 const dissolveRate = 0.001;
-const slowRate = 0.001;
+const slowRate = 0.0001;
 
 fluidCanvas.width=gridSize*cellSize;
 fluidCanvas.height=gridSize*cellSize;
@@ -26,19 +26,20 @@ let p = utils.createArray();
 let div = utils.createArray();
 let cellCenter = utils.populateCellCenter();
 
-let angle = Math.random() * 2 * Math.PI;
-let velSet = 500;
 let setVelocityFlag = false;
+
+let mousePosX = 32;
+let mousePosY = 32;
 
 animate();
 
-function addDye(xIdx, yIdx, densityAmount = 500) {
+function addDye(xIdx, yIdx, densityAmount) {
     dye[xIdx][yIdx] += densityAmount;
 }
 
-function setVelocity(xIdx, yIdx) {
-    vx[xIdx][yIdx] = Math.cos(angle) * velSet;
-    vy[xIdx][yIdx] = Math.sin(angle) * velSet;
+function setVelocity(xIdx, yIdx, dx, dy) {
+    vx[xIdx][yIdx] += dx * 1000;
+    vy[xIdx][yIdx] += dy * 1000;
 }
 
 function dissolve(arr, rate) {
@@ -47,6 +48,26 @@ function dissolve(arr, rate) {
             arr[i][j] *= 1 - rate;
         }
     }
+}
+
+function idxLimiter(idx) {
+    if (idx < 0) {
+        idx = 0;
+    }
+    if (idx > gridSize - 2) {
+        idx = gridSize - 2;
+    }
+    return idx;
+}
+
+function locLimiter(loc) {
+    if (loc > cellSize * gridSize) {
+        loc = cellSize * gridSize;
+    }
+    if (loc < 0) {
+        loc = 0;
+    }
+    return loc;
 }
 
 function drawDensity() {
@@ -82,22 +103,25 @@ function diffuse(arr, arr_n, diff, isVx, isVy) {
 function advect(arr, arr_n) {
     for ( let i=1; i < gridSize - 1; i++ ) {
         for ( let j=1; j < gridSize - 1; j++ ) {
-            let cellX = cellCenter[i][j][0];
-            let cellY = cellCenter[i][j][1];
-            let advX = cellX - vx[i][j] * dt;
-            let advY = cellY - vy[i][j] * dt;
+            let advX = cellCenter[i][j][0] - vx[i][j] * dt;
+            let advY = cellCenter[i][j][1] - vy[i][j] * dt;
             //Subtracting cellSize/2 puts the interpolation on the correct cells
-            let xi = Math.floor((advX - cellSize/2) / cellSize);
+            advX = locLimiter(advX);
+            advY = locLimiter(advY);
+            let xi = Math.floor((advX - cellSize / 2) / cellSize);
             let yi = Math.floor((advY - cellSize / 2) / cellSize);
-            if (xi > 63 || xi < 0) {
-                console.log('oops');
-            }
+            xi = idxLimiter(xi);
+            yi = idxLimiter(yi);
+            // If it needs the limiter, maybe reduce the resulting advection
             let interpX1 = utils.linearInterp(cellCenter[xi][yi][0],
                 cellCenter[xi+1][yi][0], advX, arr[xi][yi], arr[xi+1][yi]);
             let interpX2 = utils.linearInterp(cellCenter[xi][yi+1][0],
                 cellCenter[xi+1][yi+1][0], advX, arr[xi][yi+1], arr[xi+1][yi+1]);
             arr_n[i][j] = utils.linearInterp(cellCenter[xi][yi][1],
                 cellCenter[xi][yi+1][1], advY, interpX1, interpX2);
+            if (arr_n[i][j] > 1000) {
+                arr_n[i][j] = 1000;
+            }
         }
     }
     for ( let i = 1; i < gridSize - 1; i++ ) {
@@ -113,7 +137,7 @@ function project(vx, vy) {
 
     for (let i = 1; i < idxLast; i++) {
         for (let j = 1; j < idxLast; j++) {
-            div[i][j] = -0.5 * h * ((vx[i+1][j] - vx[i-1][j])
+            div[i][j] = 0.5 * ((vx[i+1][j] - vx[i-1][j])
                 + (vy[i][j+1] - vy[i][j-1]));
             p[i][j] = 0;
         }
@@ -134,8 +158,8 @@ function project(vx, vy) {
 
     for (let i = 1; i < idxLast; i++) {
         for (let j = 1; j < idxLast; j++) {
-            vx[i][j] -= (p[i+1][j] - p[i-1][j]) / 2;
-            vy[i][j] -= (p[i][j+1] - p[i][j-1]) / 2;
+            vx[i][j] += (p[i+1][j] - p[i-1][j]) / 2;
+            vy[i][j] += (p[i][j+1] - p[i][j-1]) / 2;
         }
     }
 }
@@ -191,29 +215,29 @@ function stepDye() {
 }
 
 function animate() {
-    addDye(32, 32, 100);
-    addDye(5, 5, 100);
-    addDye(58, 58, 100);
-    addDye(5, 58, 100);
-    addDye(58, 5, 100);
-    setVelocity(32, 32)
     stepVel();
     stepDye();
     drawDensity();
     requestAnimationFrame(animate);
 }
 
-// TODO: Add user interaction, add boundary setting to diffusion
+// TODO: Look for index of maximum velocity, that'll give a hint as to where the instability is starting
 
 //Going to ditch the mouse controls for now, instead, one of the cells in the center will be a source of dye and velocity, switching to a random direction every ~2 seconds
 //Event handler property. When the mouse is moved, it passes the event to the function expression below
-/*
-onmousemove = function(event) {
-    mousePosX = event.clientX;
-    mousePosY = event.clientY;
-}
 
-onmousedown = function(event) {
-    mouseIdx = [Math.floor(event.clientX / cellSize), Math.floor(event.clientY / cellSize)]
+onmousemove = function(event) {
+    if (event.clientX > 0 && event.clientX < gridSize * cellSize &&
+        event.clientY > 0 && event.clientY < gridSize * cellSize) {
+        let lastMousePosX = mousePosX;
+        let lastMousePosY = mousePosY;
+        mousePosX = event.clientX;
+        mousePosY = event.clientY;
+        let xIdx = Math.floor(mousePosX / cellSize);
+        let yIdx = Math.floor(mousePosY / cellSize);
+        let dx = mousePosX - lastMousePosX;
+        let dy = mousePosY - lastMousePosY;
+        addDye(xIdx, yIdx, 1000);
+        setVelocity(xIdx, yIdx, dx, dy);
+    }
 }
-*/
