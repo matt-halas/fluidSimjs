@@ -1,15 +1,14 @@
-const fluidCanvas=document.getElementById("fluidCanvas")
+const fluidCanvas=document.getElementById("fluidCanvas");
 
 const gridSize=64;
 const cellSize=512 / gridSize;
 
 const utils = new Utils(gridSize, cellSize);
 
-const visc = 0.000000001;
-const diff = 0.0000000001;
+let visc = 0.000000001;
+let diff = 0.0000000001;
 const dt = 0.01;
-const dissolveRate = 0.001;
-const slowRate = 0.0001;
+let dissolveRate = 0.001;
 
 fluidCanvas.width=gridSize*cellSize;
 fluidCanvas.height=gridSize*cellSize;
@@ -31,7 +30,42 @@ let setVelocityFlag = false;
 let mousePosX = 32;
 let mousePosY = 32;
 
+let delay = 0;
+let viscSlider = document.getElementById("myRange");
+
 animate();
+
+function animate() {
+    readSliders();
+    stepVel();
+    stepDye();
+    drawDensity();
+    requestAnimationFrame(animate);
+}
+
+function readSliders() {
+    if (!document.getElementById("viscRange")) {
+        return
+    } else {
+        viscSlider = document.getElementById("viscRange");
+        var x = viscSlider.value;
+        visc = 1e-1 / 10000 * x**2 + 1e-7 / 50 * x + 1e-9;
+    }
+    if (!document.getElementById("diffRange")) {
+        return
+    } else {
+        diffSlider = document.getElementById("diffRange");
+        var x = diffSlider.value;
+        diff = 1e-4 / 10000 * x**2 + 1e-8 / 50 * x + 1e-9;
+    }
+    if (!document.getElementById("dissolveRange")) {
+        return
+    } else {
+        dissolveSlider = document.getElementById("dissolveRange");
+        var x = dissolveSlider.value;
+        dissolveRate = 1e-2 / 10000 * x**2 + 1e-6 / 50 * x + 1e-7;
+    }
+}
 
 function addDye(xIdx, yIdx, densityAmount) {
     dye[xIdx][yIdx] += densityAmount;
@@ -200,9 +234,6 @@ function stepVel() {
     project(vx, vy);
     setBoundary(vx, true, false);
     setBoundary(vy, false, true);
-
-    dissolve(vx, slowRate);
-    dissolve(vy, slowRate);
 }
 
 function stepDye() {
@@ -214,12 +245,7 @@ function stepDye() {
     dissolve(dye, dissolveRate);
 }
 
-function animate() {
-    stepVel();
-    stepDye();
-    drawDensity();
-    requestAnimationFrame(animate);
-}
+
 
 // TODO: Look for index of maximum velocity, that'll give a hint as to where the instability is starting
 
