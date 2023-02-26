@@ -253,12 +253,14 @@ function stepDye() {
 //Event handler property. When the mouse is moved, it passes the event to the function expression below
 
 onmousemove = function(event) {
-    if (event.clientX > 0 && event.clientX < gridSize * cellSize &&
-        event.clientY > 0 && event.clientY < gridSize * cellSize) {
+    let leftBound = fluidCanvas.getBoundingClientRect().left;
+    let topBound = fluidCanvas.getBoundingClientRect().top;
+    if (event.clientX > leftBound && event.clientX < leftBound + gridSize * cellSize &&
+        event.clientY > topBound && event.clientY < topBound + gridSize * cellSize) {
         let lastMousePosX = mousePosX;
         let lastMousePosY = mousePosY;
-        mousePosX = event.clientX;
-        mousePosY = event.clientY;
+        mousePosX = event.clientX - leftBound;
+        mousePosY = event.clientY - topBound;
         let xIdx = Math.floor(mousePosX / cellSize);
         let yIdx = Math.floor(mousePosY / cellSize);
         let dx = mousePosX - lastMousePosX;
