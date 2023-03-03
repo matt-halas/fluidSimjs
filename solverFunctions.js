@@ -34,6 +34,8 @@ function advect(arr, arr_n, vx, vy) {
         for ( let j=1; j < gridSize - 1; j++ ) {
             let advX = cellCenter[i][j][0] - vx[i][j] * dt;
             let advY = cellCenter[i][j][1] - vy[i][j] * dt;
+            advX = locLimiter(advX);
+            advY = locLimiter(advY);
             //Subtracting cellSize/2 puts the interpolation on the correct cells
             let xi = Math.floor((advX - cellSize / 2) / cellSize);
             let yi = Math.floor((advY - cellSize / 2) / cellSize);
@@ -121,6 +123,16 @@ function dissolve(arr, rate) {
             arr[i][j] *= 1 - rate;
         }
     }
+}
+
+function locLimiter(loc) {
+    if (loc > cellSize * gridSize) {
+        loc = cellSize * gridSize;
+    }
+    if (loc < 0) {
+        loc = 0;
+    }
+    return loc;
 }
 
 function idxLimiter(idx) {
