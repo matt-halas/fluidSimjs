@@ -10,6 +10,13 @@ const gridSize=64;
 const cellSize=512 / gridSize;
 
 const utils = new Utils(gridSize, cellSize);
+var particle = new Particle(gridSize, cellSize);
+
+let particles = [];
+const numParticles = 20;
+for (let i=0; i<numParticles; i++) {
+    particles.push(new Particle(gridSize, cellSize));
+}
 
 let visc = 0.000000001;
 let diff = 0.0000000001;
@@ -34,10 +41,6 @@ let vy_n = utils.createArray();
 let mousePosX = 0;
 let mousePosY = 0;
 
-//Trying particle
-let particleX = 200;
-let particleY = 200;
-
 animate();
 
 function animate() {
@@ -45,7 +48,15 @@ function animate() {
     stepVel();
     stepDye();
     drawDensity();
+    stepParticles();
     requestAnimationFrame(animate);
+}
+
+function stepParticles() {
+    for (let i=0; i<numParticles; i++) {
+        particles[i].drawParticle(fluidCtx);
+        particles[i].moveParticle(vx, vy, cellSize, dt);
+    }
 }
 
 function addDye(xIdx, yIdx, densityAmount) {
@@ -91,7 +102,6 @@ function readSliders() {
         dissolveRate = 1e-2 / 10000 * x**2 + 1e-6 / 50 * x + 1e-7;
     }
 }
-
 
 function stepVel() {
     diffuse(vx, vx_n, visc, true, false);
