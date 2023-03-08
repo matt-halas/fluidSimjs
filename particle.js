@@ -2,6 +2,7 @@ class Particle {
     constructor(gridSize, cellSize) {
         this.x = Math.random() * gridSize * cellSize;
         this.y = Math.random() * gridSize * cellSize;
+        this.utils = new Utils(gridSize, cellSize);
     }
 
     drawParticle(fluidCtx) {
@@ -13,9 +14,13 @@ class Particle {
     }
 
     moveParticle(vx, vy, cellSize, dt) {
-        let xIdx = Math.floor(this.x / cellSize);
-        let yIdx = Math.floor(this.y / cellSize);
-        this.x += vx[xIdx][yIdx] * dt;
-        this.y += vy[xIdx][yIdx] * dt;
+        let xi = Math.floor(this.x / cellSize);
+        let yi = Math.floor(this.y / cellSize);
+        xi = this.utils.idxLimiter(xi);
+        yi = this.utils.idxLimiter(yi);
+        this.x += vx[xi][yi] * dt;
+        this.y += vy[xi][yi] * dt;
     }
+
+    
 }

@@ -10,13 +10,14 @@ const gridSize=64;
 const cellSize=512 / gridSize;
 
 const utils = new Utils(gridSize, cellSize);
-var particle = new Particle(gridSize, cellSize);
+var particle = new Particle(gridSize, cellSize, utils);
 
 let particles = [];
-const numParticles = 20;
+const numParticles = 50;
 for (let i=0; i<numParticles; i++) {
     particles.push(new Particle(gridSize, cellSize));
 }
+let particleTimer = 0;
 
 let visc = 0.000000001;
 let diff = 0.0000000001;
@@ -56,6 +57,12 @@ function stepParticles() {
     for (let i=0; i<numParticles; i++) {
         particles[i].drawParticle(fluidCtx);
         particles[i].moveParticle(vx, vy, cellSize, dt);
+    }
+    particleTimer += 1;
+    if (particleTimer >= 10) {
+        particles.shift();
+        particles.push(new Particle(gridSize, cellSize));
+        particleTimer = 0;
     }
 }
 
@@ -107,14 +114,14 @@ function stepVel() {
     diffuse(vx, vx_n, visc, true, false);
     diffuse(vy, vy_n, visc, false, true);
     project(vx, vy);
-    setBoundary(vx, true, false);
-    setBoundary(vy, false, true);
+    setBoundary(vx, true, false, visc);
+    setBoundary(vy, false, true, visc);
     
     advect(vx, vx_n, vx, vy);
     advect(vy, vy_n, vx, vy);
     project(vx, vy);
-    setBoundary(vx, true, false);
-    setBoundary(vy, false, true);
+    setBoundary(vx, true, false, visc);
+    setBoundary(vy, false, true, visc);
 }
 
 function stepDye() {

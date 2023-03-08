@@ -34,14 +34,14 @@ function advect(arr, arr_n, vx, vy) {
         for ( let j=1; j < gridSize - 1; j++ ) {
             let advX = cellCenter[i][j][0] - vx[i][j] * dt;
             let advY = cellCenter[i][j][1] - vy[i][j] * dt;
-            advX = locLimiter(advX);
-            advY = locLimiter(advY);
+            advX = utils.locLimiter(advX);
+            advY = utils.locLimiter(advY);
             //Subtracting cellSize/2 puts the interpolation on the correct cells
             let xi = Math.floor((advX - cellSize / 2) / cellSize);
             let yi = Math.floor((advY - cellSize / 2) / cellSize);
             //Limits xi and yi to be within the canvas
-            xi = idxLimiter(xi);
-            yi = idxLimiter(yi);
+            xi = utils.idxLimiter(xi);
+            yi = utils.idxLimiter(yi);
             let interpX1 = utils.linearInterp(cellCenter[xi][yi][0],
                 cellCenter[xi+1][yi][0], advX, arr[xi][yi], arr[xi+1][yi]);
             let interpX2 = utils.linearInterp(cellCenter[xi][yi+1][0],
@@ -93,15 +93,18 @@ function project(vx, vy) {
     }
 }
 
-function setBoundary(arr, isVx = false, isVy = false) {
+function setBoundary(arr, isVx = false, isVy = false, visc = null) {
     let idxLast = gridSize - 1;
     let vxSign = 1;
     let vySign = 1;
+    // For vx, left and right boundaries are set to 
     if (isVx) {
-        vxSign = 0;
+        vxSign = -1;
+        vySign = 1 - visc * 100;
     }
     if (isVy) {
-        vySign = 0;
+        vySign = -1;
+        vxSign = 1 - visc * 100;
     }
     for (let i = 1; i < idxLast; i++) {
         // Top and bottom boundaries
@@ -125,24 +128,4 @@ function dissolve(arr, rate) {
     }
 }
 
-function locLimiter(loc) {
-    if (loc > cellSize * gridSize) {
-        loc = cellSize * gridSize;
-    }
-    if (loc < 0) {
-        loc = 0;
-    }
-    return loc;
-}
-
-function idxLimiter(idx) {
-    if (idx < 0) {
-        idx = 0;
-    }
-    if (idx > gridSize - 2) {
-        idx = gridSize - 2;
-    }
-    return idx;
-}
-
-export {advect, project, diffuse, setBoundary, dissolve, idxLimiter};
+export {advect, project, diffuse, setBoundary, dissolve};

@@ -43,4 +43,24 @@ class Utils {
     linearInterp(x1, x2, xp, y1, y2) {
         return y1 + (y2 - y1) * (xp - x1) / (x2 - x1)
     }
+
+    locLimiter(loc) {
+        if (loc > this.cellSize * this.gridSize) {
+            loc = this.cellSize * this.gridSize;
+        }
+        if (loc < 0) {
+            loc = 0;
+        }
+        return loc;
+    }
+    
+    idxLimiter(idx) {
+        if (idx < 0) {
+            idx = 0;
+        }
+        if (idx > this.gridSize - 2) {
+            idx = this.gridSize - 2;
+        }
+        return idx;
+    }
 }
