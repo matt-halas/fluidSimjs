@@ -13,7 +13,7 @@ const utils = new Utils(gridSize, cellSize);
 var particle = new Particle(gridSize, cellSize, utils);
 
 let particles = [];
-const numParticles = 50;
+let numParticles = 50;
 for (let i=0; i<numParticles; i++) {
     particles.push(new Particle(gridSize, cellSize));
 }
@@ -59,7 +59,7 @@ function stepParticles() {
         particles[i].moveParticle(vx, vy, cellSize, dt);
     }
     particleTimer += 1;
-    if (particleTimer >= 10) {
+    if (particleTimer >= 1000/numParticles && numParticles > 10) {
         particles.shift();
         particles.push(new Particle(gridSize, cellSize));
         particleTimer = 0;
@@ -87,19 +87,21 @@ function drawDensity() {
 }
 
 function readSliders() {
+    //there was an issue with sliders taking too long to initialize
+    //so this function checks to see if they exist before doing any work on them
     if (!document.getElementById("viscRange")) {
         return
     } else {
         viscSlider = document.getElementById("viscRange");
         var x = viscSlider.value;
-        visc = 1e-1 / 10000 * x**2 + 1e-7 / 50 * x + 1e-9;
+        visc = 1e-1 / 10000 * x**2 + 1e-7 / 50 * x + 1e-11;
     }
     if (!document.getElementById("diffRange")) {
         return
     } else {
         diffSlider = document.getElementById("diffRange");
         var x = diffSlider.value;
-        diff = 1e-4 / 10000 * x**2 + 1e-8 / 50 * x + 1e-9;
+        diff = 1e-2 / 10000 * x**2 + 1e-6 / 50 * x + 1e-12;
     }
     if (!document.getElementById("dissolveRange")) {
         return
@@ -107,6 +109,16 @@ function readSliders() {
         dissolveSlider = document.getElementById("dissolveRange");
         var x = dissolveSlider.value;
         dissolveRate = 1e-2 / 10000 * x**2 + 1e-6 / 50 * x + 1e-7;
+    }
+    if (!document.getElementById("particlesRange")) {
+        return
+    } else {
+        dissolveSlider = document.getElementById("particlesRange");
+        var x = dissolveSlider.value;
+        numParticles = x;
+        while (particles.length < numParticles) {
+            particles.push(new Particle(gridSize, cellSize))
+        }
     }
 }
 
